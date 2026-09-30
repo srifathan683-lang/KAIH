@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jurnal 7 KAIH - SDN Kadingding</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Nunito', 'sans-serif'],
+                    },
+                    colors: {
+                        kaih: {
+                            blue: '#3b82f6',
+                            yellow: '#fbbf24',
+                            green: '#10b981',
+                            red: '#ef4444',
+                            purple: '#8b5cf6',
+                            orange: '#f97316',
+                            pink: '#ec4899',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f0fdf4; }
+        .habit-card { transition: all 0.2s ease-in-out; }
+        .habit-card:active { transform: scale(0.95); }
+        .habit-card.selected { border-color: #10b981; background-color: #d1fae5; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+        /* Toast Animation */
+        @keyframes slideIn { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideOut { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-100%); opacity: 0; } }
+        .toast-enter { animation: slideIn 0.3s forwards; }
+        .toast-exit { animation: slideOut 0.3s forwards; }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-2"></div>
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b-4 border-kaih-green sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-kaih-green rounded-full flex items-center justify-center text-white text-xl font-bold shadow-sm">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <div>
+                    <h1 class="font-display font-bold text-xl text-gray-800 leading-tight">Jurnal 7 KAIH</h1>
+                    <p class="text-xs text-gray-500 font-medium">SDN Kadingding</p>
+                </div>
+            </div>
+            <div id="user-profile" class="hidden items-center gap-3">
+                <div class="text-right hidden sm:block">
+                    <p id="user-name" class="text-sm font-bold text-gray-800">Nama</p>
+                    <p id="user-role-text" class="text-xs text-gray-500">Peran</p>
+                </div>
+                <button onclick="logout()" class="p-2 text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-50">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-5xl mx-auto w-full px-4 py-6">
+        
+        <!-- VIEW: LOGIN (Role Selector for Prototype) -->
+        <div id="view-login" class="block">
+            <div class="bg-white rounded-2xl shadow-xl p-8 max-w-md mx-auto text-center border-t-8 border-kaih-blue">
+                <h2 class="font-display text-2xl font-bold mb-2">Selamat Datang!</h2>
+                <p class="text-gray-600 mb-8 text-sm">Pilih peran Anda untuk masuk ke aplikasi Jurnal 7 Kebiasaan Anak Indonesia Hebat (Prototype).</p>
+                
+                <div class="space-y-3">
+                    <button onclick="loginAs('murid')" class="w-full flex items-center justify-between p-4 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center"><i class="fa-solid fa-child-reaching"></i></div>
+                            <div class="text-left"><p class="font-bold text-blue-900">Masuk sebagai Murid</p><p class="text-xs text-blue-600">Budi (Kelas 1A)</p></div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-blue-400"></i>
+                    </button>
+                    
+                    <button onclick="loginAs('orangtua')" class="w-full flex items-center justify-between p-4 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-xl transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-orange-500 text-white rounded-full flex items-center justify-center"><i class="fa-solid fa-users"></i></div>
+                            <div class="text-left"><p class="font-bold text-orange-900">Masuk sebagai Orang Tua</p><p class="text-xs text-orange-600">Orang Tua Budi</p></div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-orange-400"></i>
+                    </button>
+
+                    <button onclick="loginAs('guru')" class="w-full flex items-center justify-between p-4 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-purple-500 text-white rounded-full flex items-center justify-center"><i class="fa-solid fa-chalkboard-user"></i></div>
+                            <div class="text-left"><p class="font-bold text-purple-900">Masuk sebagai Guru</p><p class="text-xs text-purple-600">Bu Ani (Wali Kelas 1A)</p></div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-purple-400"></i>
+                    </button>
+
+                    <button onclick="loginAs('kepala_sekolah')" class="w-full flex items-center justify-between p-4 bg-green-50 hover:bg-green-100 border border-green-200 rounded-xl transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center"><i class="fa-solid fa-school"></i></div>
+                            <div class="text-left"><p class="font-bold text-green-900">Kepala Sekolah</p><p class="text-xs text-green-600">Bpk. Ahmad</p></div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-green-400"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: STUDENT DASHBOARD -->
+        <div id="view-student" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm p-5 border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h2 class="font-display font-bold text-xl text-gray-800">Halo, Budi! 👋</h2>
+                    <p class="text-gray-500 text-sm">Ayo catat kebiasaan baikmu hari ini.</p>
+                </div>
+                <div class="flex bg-gray-100 p-1 rounded-lg">
+                    <button id="btn-date-yesterday" onclick="selectStudentDate('yesterday')" class="px-4 py-2 text-sm font-medium rounded-md text-gray-600 hover:text-gray-900">Kemarin</button>
+                    <button id="btn-date-today" onclick="selectStudentDate('today')" class="px-4 py-2 text-sm font-medium rounded-md bg-white shadow-sm text-kaih-blue">Hari Ini</button>
+                </div>
+            </div>
+
+            <div id="student-journal-status" class="hidden p-4 rounded-xl text-sm font-medium flex items-center gap-3">
+                <!-- Status diinjeksi via JS -->
+            </div>
+
+            <div id="student-habit-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <!-- Kebiasaan diinjeksi via JS -->
+            </div>
+
+            <div class="flex justify-end mt-6">
+                <button id="btn-submit-journal" onclick="submitJournal()" class="bg-kaih-green hover:bg-green-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 w-full md:w-auto text-lg">
+                    <i class="fa-solid fa-paper-plane mr-2"></i> Kirim Jurnal
+                </button>
+            </div>
+        </div>
+
+        <!-- VIEW: PARENT DASHBOARD -->
+        <div id="view-parent" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-child"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-display font-bold text-xl text-gray-800">Jurnal Budi (Kelas 1A)</h2>
+                        <p class="text-gray-500 text-sm">Pantau dan konfirmasi kebiasaan anak Anda.</p>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button onclick="selectParentDate('today')" id="btn-parent-today" class="px-4 py-2 text-sm font-medium rounded-md bg-kaih-blue text-white shadow-sm">Hari Ini</button>
+                    <button onclick="selectParentDate('yesterday')" id="btn-parent-yesterday" class="px-4 py-2 text-sm font-medium rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200">Kemarin</button>
+                </div>
+
+                <div id="parent-journal-content" class="bg-gray-50 rounded-xl p-5 border border-gray-200">
+                    <!-- Konten jurnal diinjeksi via JS -->
+                </div>
+                
+                <div id="parent-actions" class="mt-6 flex flex-col sm:flex-row gap-3 hidden">
+                    <button onclick="confirmJournal(true)" class="flex-1 bg-kaih-green hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl transition-colors">
+                        <i class="fa-solid fa-check-circle mr-2"></i> Konfirmasi Jurnal
+                    </button>
+                    <button onclick="confirmJournal(false)" class="flex-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold py-3 px-4 rounded-xl transition-colors">
+                        <i class="fa-solid fa-rotate-left mr-2"></i> Minta Perbaikan
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: TEACHER DASHBOARD -->
+        <div id="view-teacher" class="hidden space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="font-display font-bold text-2xl text-gray-800">Dasbor Kelas 1A</h2>
+                    <p class="text-gray-500">Wali Kelas: Bu Ani • <span id="teacher-date-display"></span></p>
+                </div>
+                <input type="date" id="teacher-date-picker" onchange="renderTeacherDashboard()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kaih-blue outline-none text-gray-700">
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-kaih-blue">
+                    <p class="text-sm text-gray-500 font-medium mb-1">Pengisian Jurnal</p>
+                    <div class="flex items-end gap-2">
+                        <span id="stat-fill-percent" class="text-3xl font-bold text-gray-800">0%</span>
+                        <span id="stat-fill-fraction" class="text-sm text-gray-400 mb-1">0/0 Siswa</span>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-kaih-green">
+                    <p class="text-sm text-gray-500 font-medium mb-1">Rata-rata Kebiasaan Terlaksana</p>
+                    <div class="flex items-end gap-2">
+                        <span id="stat-habit-percent" class="text-3xl font-bold text-gray-800">0%</span>
+                        <span class="text-sm text-gray-400 mb-1">dari jurnal yg masuk</span>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl p-5 shadow-sm border-l-4 border-kaih-yellow">
+                    <p class="text-sm text-gray-500 font-medium mb-1">Menunggu Konfirmasi Ortu</p>
+                    <div class="flex items-end gap-2">
+                        <span id="stat-unconfirmed" class="text-3xl font-bold text-gray-800">0</span>
+                        <span class="text-sm text-gray-400 mb-1">Jurnal</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student List -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800">Status Murid Hari Ini</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                                <th class="p-4 font-medium border-b">Nama Murid</th>
+                                <th class="p-4 font-medium border-b text-center">Status Jurnal</th>
+                                <th class="p-4 font-medium border-b text-center">Kebiasaan (T/F)</th>
+                                <th class="p-4 font-medium border-b text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacher-student-list" class="text-sm divide-y divide-gray-100">
+                            <!-- Daftar diinjeksi via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: PRINCIPAL DASHBOARD -->
+        <div id="view-principal" class="hidden space-y-6">
+            <div>
+                <h2 class="font-display font-bold text-2xl text-gray-800">Rekapitulasi Sekolah</h2>
+                <p class="text-gray-500">SDN Kadingding • Ringkasan Keseluruhan</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Kelas Terspesifikasi -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="font-bold text-gray-800 mb-4">Tingkat Pengisian per Kelas (Hari Ini)</h3>
+                    <div class="space-y-4">
+                        <!-- Mock Data Bars -->
+                        <div>
+                            <div class="flex justify-between text-sm mb-1"><span class="font-medium">Kelas 1A</span><span class="text-kaih-blue font-bold" id="prin-bar-1a-txt">0%</span></div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5"><div id="prin-bar-1a" class="bg-kaih-blue h-2.5 rounded-full" style="width: 0%"></div></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1"><span class="font-medium">Kelas 1B</span><span class="text-gray-500">Belum ada data</span></div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5"><div class="bg-gray-300 h-2.5 rounded-full" style="width: 0%"></div></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1"><span class="font-medium">Kelas 2A</span><span class="text-gray-500">Belum ada data</span></div>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5"><div class="bg-gray-300 h-2.5 rounded-full" style="width: 0%"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col justify-center items-center text-center">
+                    <div class="w-20 h-20 bg-yellow-100 text-yellow-500 rounded-full flex items-center justify-center text-4xl mb-4">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <h3 class="font-bold text-xl text-gray-800 mb-2">Apresiasi Sekolah</h3>
+                    <p class="text-gray-600 text-sm mb-4">Kelas 1A mendapatkan lencana <strong>"Kelas Terajin"</strong> minggu ini karena konsistensi pengisian jurnal tertinggi!</p>
+                    <button onclick="showToast('Fitur unduh laporan PDF/Excel sedang dalam pengembangan.', 'info')" class="text-kaih-blue font-medium text-sm hover:underline"><i class="fa-solid fa-download mr-1"></i> Unduh Laporan Sekolah</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-auto">
+        <div class="max-w-5xl mx-auto px-4 py-6 text-center text-sm text-gray-500">
+            <p>&copy; 2026 SDN Kadingding. Aplikasi Jurnal 7 Kebiasaan Anak Indonesia Hebat (v1.0).</p>
+        </div>
+    </footer>
+
+    <!-- Supabase Dependencies & App Logic -->
+    <script type="module">
+        import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+        // ==========================================
+        // KONFIGURASI SUPABASE
+        // Ganti dengan URL dan Anon Key dari Proyek Supabase Anda
+        // ==========================================
+        const SUPABASE_URL = 'ISI_DENGAN_URL_SUPABASE_ANDA';
+        const SUPABASE_ANON_KEY = 'ISI_DENGAN_ANON_KEY_SUPABASE_ANDA';
+        
+        let supabase = null;
+        let isOnline = false;
+
+        try {
+            if (SUPABASE_URL !== 'ISI_DENGAN_URL_SUPABASE_ANDA') {
+                supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                isOnline = true;
+                console.log("Supabase client initialized.");
+                fetchJournals(); // Ambil data saat terhubung
+            } else {
+                console.warn("Kredensial Supabase belum diisi. Berjalan dalam Mode Mock/Offline.");
+            }
+        } catch (e) {
+            console.error("Gagal menginisialisasi Supabase:", e);
+        }
+
+        // Global Variables & State
+        window.appState = {
+            role: null, // 'murid', 'guru', 'orangtua', 'kepala_sekolah'
+            studentId: 'murid-01',
+            studentName: 'Budi',
+            classId: 'kelas-1a',
+            className: '1A',
+            selectedDateStr: getFormattedDate(new Date()),
+            journals: [], // Menyimpan data dari tabel 'daily_journals'
+            currentDraft: {} 
+        };
+
+        const HABITS = [
+            { id: 'h1', title: 'Bangun Pagi', icon: 'fa-sun', color: 'text-orange-500', bg: 'bg-orange-100', border: 'border-orange-200' },
+            { id: 'h2', title: 'Beribadah', icon: 'fa-hands-praying', color: 'text-purple-500', bg: 'bg-purple-100', border: 'border-purple-200' },
+            { id: 'h3', title: 'Berolahraga', icon: 'fa-person-running', color: 'text-red-500', bg: 'bg-red-100', border: 'border-red-200' },
+            { id: 'h4', title: 'Makan Sehat', icon: 'fa-apple-whole', color: 'text-green-500', bg: 'bg-green-100', border: 'border-green-200' },
+            { id: 'h5', title: 'Gemar Belajar', icon: 'fa-book-open', color: 'text-blue-500', bg: 'bg-blue-100', border: 'border-blue-200' },
+            { id: 'h6', title: 'Bermasyarakat', icon: 'fa-people-carry-box', color: 'text-pink-500', bg: 'bg-pink-100', border: 'border-pink-200' },
+            { id: 'h7', title: 'Tidur Cepat', icon: 'fa-moon', color: 'text-indigo-500', bg: 'bg-indigo-100', border: 'border-indigo-200' },
+        ];
+
+        const MOCK_STUDENTS = [
+            { id: 'murid-01', name: 'Budi' },
+            { id: 'murid-02', name: 'Siti' },
+            { id: 'murid-03', name: 'Andi' },
+            { id: 'murid-04', name: 'Rina' }
+        ];
+
+        function getFormattedDate(date) {
+            const d = new Date(date);
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            return d.toISOString().split('T')[0];
+        }
+
+        function getYesterdayStr() {
+            const d = new Date();
+            d.setDate(d.getDate() - 1);
+            return getFormattedDate(d);
+        }
+
+        function formatDateDisplay(dateStr) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateStr).toLocaleDateString('id-ID', options);
+        }
+
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgClass = type === 'success' ? 'bg-kaih-green' : type === 'error' ? 'bg-red-500' : 'bg-kaih-blue';
+            let icon = type === 'success' ? 'fa-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-info';
+            
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 text-sm font-medium toast-enter max-w-sm`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('toast-enter');
+                toast.classList.add('toast-exit');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        async function fetchJournals() {
+            if (!isOnline) return;
+            try {
+                // Asumsi tabel bernama 'daily_journals'
+                const { data, error } = await supabase.from('daily_journals').select('*');
+                if (error) throw error;
+                window.appState.journals = data || [];
+                refreshCurrentView();
+            } catch (error) {
+                console.error("Error fetching from Supabase:", error);
+            }
+        }
+
+        function getJournalForStudent(dateStr, studentId) {
+            return window.appState.journals.find(j => j.date === dateStr && j.studentId === studentId);
+        }
+
+        window.loginAs = function(role) {
+            window.appState.role = role;
+            document.getElementById('view-login').classList.add('hidden');
+            document.getElementById('user-profile').classList.remove('hidden');
+            
+            ['student', 'parent', 'teacher', 'principal'].forEach(v => {
+                document.getElementById(`view-${v}`).classList.add('hidden');
+            });
+
+            document.getElementById(`view-${role === 'murid' ? 'student' : role === 'orangtua' ? 'parent' : role === 'guru' ? 'teacher' : 'principal'}`).classList.remove('hidden');
+
+            const nameEl = document.getElementById('user-name');
+            const roleEl = document.getElementById('user-role-text');
+            
+            if(role === 'murid') {
+                nameEl.innerText = 'Budi'; roleEl.innerText = 'Murid (1A)';
+                window.appState.selectedDateStr = getFormattedDate(new Date());
+                renderStudentDashboard();
+            } else if(role === 'orangtua') {
+                nameEl.innerText = 'Bpk/Ibu Budi'; roleEl.innerText = 'Orang Tua';
+                window.appState.selectedDateStr = getFormattedDate(new Date());
+                renderParentDashboard();
+            } else if(role === 'guru') {
+                nameEl.innerText = 'Bu Ani'; roleEl.innerText = 'Wali Kelas 1A';
+                document.getElementById('teacher-date-picker').value = getFormattedDate(new Date());
+                renderTeacherDashboard();
+            } else if(role === 'kepala_sekolah') {
+                nameEl.innerText = 'Bpk. Ahmad'; roleEl.innerText = 'Kepala Sekolah';
+                renderPrincipalDashboard();
+            }
+            
+            if(isOnline) fetchJournals(); // Segarkan data saat ganti peran
+            showToast(`Berhasil masuk sebagai ${roleEl.innerText}`, 'success');
+        };
+
+        window.logout = function() {
+            window.appState.role = null;
+            document.getElementById('user-profile').classList.add('hidden');
+            ['student', 'parent', 'teacher', 'principal'].forEach(v => {
+                document.getElementById(`view-${v}`).classList.add('hidden');
+            });
+            document.getElementById('view-login').classList.remove('hidden');
+        };
+
+        window.refreshCurrentView = function() {
+            const role = window.appState.role;
+            if (role === 'murid') renderStudentDashboard();
+            else if (role === 'orangtua') renderParentDashboard();
+            else if (role === 'guru') renderTeacherDashboard();
+            else if (role === 'kepala_sekolah') renderPrincipalDashboard();
+        };
+
+        window.selectStudentDate = function(dayType) {
+            const todayStr = getFormattedDate(new Date());
+            window.appState.selectedDateStr = dayType === 'today' ? todayStr : getYesterdayStr();
+            
+            document.getElementById('btn-date-today').className = `px-4 py-2 text-sm font-medium rounded-md ${dayType === 'today' ? 'bg-white shadow-sm text-kaih-blue' : 'text-gray-600 hover:text-gray-900'}`;
+            document.getElementById('btn-date-yesterday').className = `px-4 py-2 text-sm font-medium rounded-md ${dayType === 'yesterday' ? 'bg-white shadow-sm text-kaih-blue' : 'text-gray-600 hover:text-gray-900'}`;
+            
+            renderStudentDashboard();
+        };
+
+        window.toggleHabit = function(habitId) {
+            const existingJournal = getJournalForStudent(window.appState.selectedDateStr, window.appState.studentId);
+            if (existingJournal && existingJournal.status === 'Dikonfirmasi') {
+                showToast("Jurnal sudah dikonfirmasi orang tua, tidak dapat diubah.", "info");
+                return;
+            }
+            window.appState.currentDraft[habitId] = !window.appState.currentDraft[habitId];
+            renderStudentHabits();
+        };
+
+        window.renderStudentDashboard = function() {
+            const dateStr = window.appState.selectedDateStr;
+            const existingJournal = getJournalForStudent(dateStr, window.appState.studentId);
+            
+            if (existingJournal) {
+                window.appState.currentDraft = { ...existingJournal.habits };
+            } else {
+                window.appState.currentDraft = HABITS.reduce((acc, h) => ({...acc, [h.id]: false}), {});
+            }
+
+            renderStudentStatus(existingJournal);
+            renderStudentHabits();
+        };
+
+        function renderStudentStatus(journal) {
+            const statusEl = document.getElementById('student-journal-status');
+            const btnSubmit = document.getElementById('btn-submit-journal');
+            
+            statusEl.classList.remove('hidden', 'bg-yellow-100', 'text-yellow-800', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            btnSubmit.classList.remove('hidden');
+
+            if (!journal) {
+                statusEl.classList.add('hidden');
+            } else if (journal.status === 'Menunggu konfirmasi') {
+                statusEl.classList.add('bg-yellow-100', 'text-yellow-800');
+                statusEl.innerHTML = '<i class="fa-solid fa-clock"></i> Jurnal sudah dikirim. Menunggu konfirmasi orang tua.';
+            } else if (journal.status === 'Dikonfirmasi') {
+                statusEl.classList.add('bg-green-100', 'text-green-800');
+                statusEl.innerHTML = '<i class="fa-solid fa-check-double"></i> Jurnal sudah dikonfirmasi orang tua. Hebat!';
+                btnSubmit.classList.add('hidden'); 
+            } else if (journal.status === 'Perlu perbaikan') {
+                statusEl.classList.add('bg-red-100', 'text-red-800');
+                statusEl.innerHTML = '<i class="fa-solid fa-pen"></i> Orang tua meminta perbaikan. Silakan perbaiki dan kirim ulang.';
+            }
+        }
+
+        function renderStudentHabits() {
+            const grid = document.getElementById('student-habit-grid');
+            grid.innerHTML = '';
+            const draft = window.appState.currentDraft;
+            const existingJournal = getJournalForStudent(window.appState.selectedDateStr, window.appState.studentId);
+            const isLocked = existingJournal && existingJournal.status === 'Dikonfirmasi';
+
+            HABITS.forEach(habit => {
+                const isSelected = draft[habit.id];
+                const card = document.createElement('div');
+                
+                let baseClasses = `habit-card relative rounded-2xl border-2 p-4 flex flex-col items-center justify-center gap-3 cursor-pointer select-none bg-white ${habit.border}`;
+                if (isSelected) baseClasses += ' selected';
+                else if (isLocked) baseClasses += ' opacity-50 cursor-not-allowed';
+                else baseClasses += ' hover:shadow-md';
+
+                card.className = baseClasses;
+                card.onclick = () => { if(!isLocked) toggleHabit(habit.id); };
+
+                card.innerHTML = `
+                    <div class="w-14 h-14 rounded-full flex items-center justify-center text-2xl ${isSelected ? 'bg-kaih-green text-white' : habit.bg + ' ' + habit.color}">
+                        <i class="fa-solid ${habit.icon}"></i>
+                    </div>
+                    <span class="font-bold text-center text-sm ${isSelected ? 'text-kaih-green' : 'text-gray-700'}">${habit.title}</span>
+                    ${isSelected ? '<div class="absolute top-2 right-2 text-kaih-green text-lg"><i class="fa-solid fa-circle-check"></i></div>' : ''}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        window.submitJournal = async function() {
+            const dateStr = window.appState.selectedDateStr;
+            const draft = window.appState.currentDraft;
+            const existingJournal = getJournalForStudent(dateStr, window.appState.studentId);
+            const status = 'Menunggu konfirmasi';
+            
+            const payload = {
+                studentId: window.appState.studentId, // Sesuaikan dengan kolom Supabase
+                date: dateStr,
+                habits: draft,
+                status: status,
+                classId: window.appState.classId // Opsional sesuai DB
+            };
+
+            const btn = document.getElementById('btn-submit-journal');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Mengirim...';
+
+            try {
+                if (isOnline) {
+                    if (existingJournal) {
+                        const { error } = await supabase.from('daily_journals').update(payload).eq('id', existingJournal.id);
+                        if(error) throw error;
+                    } else {
+                        const { error } = await supabase.from('daily_journals').insert([payload]);
+                        if(error) throw error;
+                    }
+                    await fetchJournals();
+                } else {
+                    // MOCK MODE (Tanpa Supabase credentials)
+                    if (existingJournal) {
+                        existingJournal.habits = { ...draft };
+                        existingJournal.status = status;
+                    } else {
+                        window.appState.journals.push({
+                            id: 'mock-' + Date.now(),
+                            ...payload
+                        });
+                    }
+                }
+                showToast("Jurnal berhasil dikirim!", "success");
+                refreshCurrentView();
+            } catch (error) {
+                console.error("Error saving:", error);
+                showToast("Gagal menyimpan jurnal.", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Kirim Jurnal';
+            }
+        };
+
+        window.selectParentDate = function(dayType) {
+            const todayStr = getFormattedDate(new Date());
+            window.appState.selectedDateStr = dayType === 'today' ? todayStr : getYesterdayStr();
+            
+            document.getElementById('btn-parent-today').className = `px-4 py-2 text-sm font-medium rounded-md ${dayType === 'today' ? 'bg-kaih-blue text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`;
+            document.getElementById('btn-parent-yesterday').className = `px-4 py-2 text-sm font-medium rounded-md ${dayType === 'yesterday' ? 'bg-kaih-blue text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`;
+            
+            renderParentDashboard();
+        };
+
+        window.renderParentDashboard = function() {
+            const dateStr = window.appState.selectedDateStr;
+            const journal = getJournalForStudent(dateStr, window.appState.studentId);
+            const contentEl = document.getElementById('parent-journal-content');
+            const actionsEl = document.getElementById('parent-actions');
+
+            if (!journal) {
+                contentEl.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="text-gray-300 text-5xl mb-3"><i class="fa-solid fa-clipboard-question"></i></div>
+                        <h3 class="text-gray-600 font-bold mb-1">Belum Ada Jurnal</h3>
+                        <p class="text-gray-500 text-sm">Budi belum mengirimkan jurnal untuk tanggal ${formatDateDisplay(dateStr)}.</p>
+                    </div>`;
+                actionsEl.classList.add('hidden');
+                return;
+            }
+
+            let listHtml = '<div class="space-y-3">';
+            let completedCount = 0;
+            HABITS.forEach(h => {
+                const done = journal.habits[h.id];
+                if(done) completedCount++;
+                listHtml += `
+                    <div class="flex items-center justify-between bg-white p-3 rounded-lg border ${done ? 'border-green-200' : 'border-gray-200'}">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center ${done ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}"><i class="fa-solid ${h.icon}"></i></div>
+                            <span class="${done ? 'text-gray-800 font-medium' : 'text-gray-400 line-through'}">${h.title}</span>
+                        </div>
+                        <div>
+                            ${done ? '<i class="fa-solid fa-check text-green-500 text-xl"></i>' : '<i class="fa-solid fa-xmark text-gray-300 text-xl"></i>'}
+                        </div>
+                    </div>
+                `;
+            });
+            listHtml += '</div>';
+
+            let statusBadge = '';
+            if (journal.status === 'Menunggu konfirmasi') statusBadge = '<span class="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded">Menunggu Konfirmasi</span>';
+            else if (journal.status === 'Dikonfirmasi') statusBadge = '<span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">Sudah Dikonfirmasi</span>';
+            else if (journal.status === 'Perlu perbaikan') statusBadge = '<span class="bg-red-100 text-red-800 text-xs font-bold px-2 py-1 rounded">Perlu Perbaikan</span>';
+
+            contentEl.innerHTML = `
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-200">
+                    <div>
+                        <p class="text-sm text-gray-500">Tanggal</p>
+                        <p class="font-bold text-gray-800">${formatDateDisplay(dateStr)}</p>
+                    </div>
+                    <div class="text-right">
+                        ${statusBadge}
+                        <p class="text-xs text-gray-500 mt-1">${completedCount} dari 7 terlaksana</p>
+                    </div>
+                </div>
+                ${listHtml}
+            `;
+
+            if (journal.status === 'Menunggu konfirmasi' || journal.status === 'Perlu perbaikan') {
+                actionsEl.classList.remove('hidden');
+            } else {
+                actionsEl.classList.add('hidden');
+            }
+        };
+
+        window.confirmJournal = async function(isConfirmed) {
+            const dateStr = window.appState.selectedDateStr;
+            const journal = getJournalForStudent(dateStr, window.appState.studentId);
+            if(!journal) return;
+
+            const newStatus = isConfirmed ? 'Dikonfirmasi' : 'Perlu perbaikan';
+            try {
+                if (isOnline) {
+                    const { error } = await supabase.from('daily_journals').update({ status: newStatus }).eq('id', journal.id);
+                    if(error) throw error;
+                    await fetchJournals();
+                } else {
+                    // MOCK MODE
+                    journal.status = newStatus;
+                }
+                showToast(isConfirmed ? "Jurnal berhasil dikonfirmasi." : "Permintaan perbaikan dikirim ke anak.", isConfirmed ? "success" : "info");
+                refreshCurrentView();
+            } catch(e) {
+                console.error(e);
+                showToast("Terjadi kesalahan.", "error");
+            }
+        };
+
+        window.renderTeacherDashboard = function() {
+            const datePicker = document.getElementById('teacher-date-picker');
+            const dateStr = datePicker.value || getFormattedDate(new Date());
+            document.getElementById('teacher-date-display').innerText = formatDateDisplay(dateStr);
+
+            const listEl = document.getElementById('teacher-student-list');
+            listEl.innerHTML = '';
+
+            let submittedCount = 0;
+            let totalHabitsDone = 0;
+            let totalHabitsPossible = 0; 
+            let unconfirmedCount = 0;
+
+            MOCK_STUDENTS.forEach(student => {
+                const journal = getJournalForStudent(dateStr, student.id);
+                const tr = document.createElement('tr');
+                
+                let statusHtml = '<span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded font-medium">Belum mengisi</span>';
+                let habitsStr = '-';
+                
+                if (journal) {
+                    submittedCount++;
+                    const doneCount = Object.values(journal.habits).filter(v=>v).length;
+                    totalHabitsDone += doneCount;
+                    totalHabitsPossible += 7;
+                    habitsStr = `<span class="font-bold text-gray-800">${doneCount}</span><span class="text-gray-400">/7</span>`;
+
+                    if (journal.status === 'Menunggu konfirmasi') {
+                        statusHtml = '<span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded font-medium">Menunggu Ortu</span>';
+                        unconfirmedCount++;
+                    } else if (journal.status === 'Dikonfirmasi') {
+                        statusHtml = '<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-medium">Dikonfirmasi</span>';
+                    } else if (journal.status === 'Perlu perbaikan') {
+                        statusHtml = '<span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded font-medium">Perbaikan</span>';
+                    }
+                }
+
+                tr.innerHTML = `
+                    <td class="p-4 border-b">
+                        <div class="font-medium text-gray-800">${student.name}</div>
+                        <div class="text-xs text-gray-500">${student.id}</div>
+                    </td>
+                    <td class="p-4 border-b text-center">${statusHtml}</td>
+                    <td class="p-4 border-b text-center">${habitsStr}</td>
+                    <td class="p-4 border-b text-center">
+                        <button onclick="showToast('Fitur lihat detail sedang dikembangkan.', 'info')" class="text-kaih-blue hover:text-blue-700 bg-blue-50 px-3 py-1 rounded-md text-sm font-medium transition-colors">Detail</button>
+                    </td>
+                `;
+                listEl.appendChild(tr);
+            });
+
+            // Update Stats Guru
+            const fillPercent = MOCK_STUDENTS.length > 0 ? Math.round((submittedCount / MOCK_STUDENTS.length) * 100) : 0;
+            document.getElementById('stat-fill-percent').innerText = `${fillPercent}%`;
+            document.getElementById('stat-fill-fraction').innerText = `${submittedCount}/${MOCK_STUDENTS.length} Siswa`;
+
+            const habitPercent = totalHabitsPossible > 0 ? Math.round((totalHabitsDone / totalHabitsPossible) * 100) : 0;
+            document.getElementById('stat-habit-percent').innerText = `${habitPercent}%`;
+
+            document.getElementById('stat-unconfirmed').innerText = unconfirmedCount;
+        };
+
+        window.renderPrincipalDashboard = function() {
+            const todayStr = getFormattedDate(new Date());
+            let submittedCount = 0;
+            
+            MOCK_STUDENTS.forEach(student => {
+                const journal = getJournalForStudent(todayStr, student.id);
+                if(journal) submittedCount++;
+            });
+
+            const fillPercent = MOCK_STUDENTS.length > 0 ? Math.round((submittedCount / MOCK_STUDENTS.length) * 100) : 0;
+            
+            setTimeout(() => {
+                document.getElementById('prin-bar-1a').style.width = `${fillPercent}%`;
+                document.getElementById('prin-bar-1a-txt').innerText = `${fillPercent}%`;
+            }, 100);
+        };
+
+    </script>
+</body>
+</html>
